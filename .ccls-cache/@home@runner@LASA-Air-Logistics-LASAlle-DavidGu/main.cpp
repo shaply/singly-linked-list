@@ -1,121 +1,174 @@
 
 //
-//  main.cpp
-//  LLTemplate
+//  main.cpp
+//  LLTemplate
 //
-//  Created by James Shockey on 12/6/16.
-//  Copyright © 2016 James Shockey. All rights reserved.
+//  Created by James Shockey on 12/6/16.
+//  Copyright © 2016 James Shockey. All rights reserved.
 //
-
 
 /*
  *
- *	Linked List lab.
- *	- Build a library for singly linked list.
- *	- Replace the airport array in main with a Linked List.
- *  - sort the array. 
- *	
+ *    Linked List lab.
+ *    - Build a library for singly linked list.
+ *    - Replace the airport array in main with a Linked List.
+ *  - sort the array.
+ *
  */
 
-
-#include <iostream>
-#include <fstream>
-#include <cmath> 
 #include "slist.h"
+#include <cmath>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+#include <string>
 
 using namespace std;
 
-class Airport
-{
+class Airport {
 public:
-    char    code[5];
-    double   longitude;
-    double   latitude;
-    
+  char code[5];
+  double longitude;
+  double latitude;
+  double dist;
+  Airport *next;
 };
 
-
-
-void simpleSortTotal(Airport* s[], int c);
+void simpleSortTotal(Airport *p1, Airport *ref);
 double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d);
 
-int main()
-{
-    ifstream infile;
-    int i=0;
-    char cNum[10] ;
-    Airport* airportArr[13500];			// Replace array with Linked List
-    int   airportCount;
-    //Airport* a[13500];
-    
-    infile.open (".....csv", ifstream::in);
-    if (infile.is_open())
-    {
-        int   c=0;
-        while (infile.good())
-        {
-            airportArr[c] = new Airport();
-            infile.getline(airportArr[c]->code, 256, ',');
-            infile.getline(cNum, 256, ',');
-            airportArr[c]->longitude = atof(cNum);
-            infile.getline(cNum, 256, '\n');
-            airportArr[c]->latitude = atof(cNum);
+int main() {
+  ifstream infile;
+  int i = 0;
+  char cNum[10];
+  Airport *head = new Airport();
+  int airportCount;
 
-            if (!(c % 1000))
-                cout << airportArr[c]->code << " long: " << airportArr[c]->longitude << " lat: " << airportArr[c]->latitude <<  endl;
+  infile.open("USAirportCodes.csv", ifstream::in);
+  Airport *prev = head;
+  if (infile.is_open()) {
+    int c = 0;
+    while (infile.good()) {
+      Airport *airport = new Airport();
+      infile.getline(airport->code, 256, ',');
+      infile.getline(cNum, 256, ',');
+      airport->longitude = atof(cNum);
+      infile.getline(cNum, 256, '\n');
+      airport->latitude = atof(cNum);
 
-            /*
-            if (!(c % 1000))
-            {
-                cout << airportArr[c]->code << " long: " << airportArr[c]->longitude << " lat: " << airportArr[c]->latitude <<  endl;
-                cout << airportArr[c+1]->code << endl; //" long: " << airportArr[c+1]->longitude << " lat: " << airportArr[c+1]->latitude <<  endl;                               
-            }
-            */
+      // Add new airport to list
+      prev->next = airport;
+      prev = airport;
 
-            
-            i++ ;
-            c++;
-        }
-        airportCount = c-1;
-        infile.close();
-        
-         for (int c=0; c < airportCount; c++)
-            if (!(c % 1000))
-            {
-                cout << airportArr[c]->code << " long: " << airportArr[c]->longitude << " lat: " << airportArr[c]->latitude <<  endl;
-                cout << airportArr[c+1]->code << " long: " << airportArr[c+1]->longitude << " lat: " << airportArr[c+1]->latitude <<  endl;
-                cout <<"Distance between " << airportArr[c]->code << " and " << airportArr[c+1]->code << " is "
-                  << distanceEarth( airportArr[c]->longitude, airportArr[c]->latitude , airportArr[c+1]->longitude, airportArr[c+1]->latitude) << endl;
-            }
+      // if (!(c % 1000))
+      //     cout << airport->code << " long: " << airport->longitude
+      //          << " lat: " << airport->latitude << endl;
 
+      /*
+      if (!(c % 1000))
+      {
+      cout << airportArr[c]->code << " long: " <<
+      airportArr[c]->longitude << " lat: " << airportArr[c]->latitude <<
+      endl; cout << airportArr[c+1]->code << endl; //" long: " <<
+      airportArr[c+1]->longitude << " lat: " << airportArr[c+1]->latitude
+      <<  endl;
+      }
+      */
 
-
+      i++;
+      c++;
     }
-    else
-    {
-        cout << "Error opening file";
+    airportCount = c - 1;
+    // Skip header
+    head->next = head->next->next;
+    infile.close();
+
+    Airport *ref;
+    // Find reference airprt
+    prev = head;
+    while (prev->next) {
+      if (strncmp(prev->next->code, "AUS", 3) == 0) {
+        ref = prev->next;
+        break;
+      }
+      prev = prev->next;
     }
- 
+    if (ref == NULL) {
+      cout << "REF NEVER MADE";
+      exit(1);
+    }
 
+    prev = head;
+    while (prev->next) {
+      prev->next->dist =
+          distanceEarth(prev->next->latitude, prev->next->longitude,
+                        ref->latitude, ref->longitude);
+      prev = prev->next;
+    }
 
-    
+    // Sort linked list
+    simpleSortTotal(head, ref);
+
+    // Check if sorted and still have everything
+    prev = head;
+    while (prev->next->next != NULL) {
+      if (prev->next->dist > prev->next->next->dist)
+        cout << "ERROR "
+             << distanceEarth(prev->next->latitude, prev->next->longitude,
+                              ref->latitude, ref->longitude) -
+                    distanceEarth(prev->next->next->latitude,
+                                  prev->next->next->longitude, ref->latitude,
+                                  ref->longitude)
+             << endl;
+      prev = prev->next;
+    }
+
+    // // Find Farthest airport
+    prev = head;
+    while (prev->next != NULL)
+      prev = prev->next;
+    cout << prev->code << " long: " << prev->longitude
+         << " lat: " << prev->latitude << " dist: "
+         << distanceEarth(prev->latitude, prev->longitude, ref->latitude,
+                          ref->longitude)
+         << endl;
+
+    // // Print all airports within 100 miles radius
+    prev = head->next;
+    ofstream in100("within100miles.csv");
+    if (in100.is_open()) {
+      while (prev != NULL && prev->dist <= 100) {
+        in100 << prev->code << " long: " << prev->longitude
+              << " lat: " << prev->latitude << " dist: " << prev->dist << endl;
+        prev = prev->next;
+      }
+    }
+    in100.close();
+
+    // Print all the airports
+    prev = head->next;
+    while (prev != NULL) {
+        cout << prev->code << " long: " << prev->longitude
+           << " lat: " << prev->latitude << " dist: "
+           << distanceEarth(prev->latitude, prev->longitude, ref->latitude,
+                            ref->longitude)
+           << endl;
+        prev = prev->next;
+    }
+
+  } else {
+    cout << "Error opening file";
+  }
 }
-
-
 
 #define pi 3.14159265358979323846
 #define earthRadiusKm 6371.0
 
 // This function converts decimal degrees to radians
-double deg2rad(double deg) {
-  return (deg * pi / 180);
-}
+double deg2rad(double deg) { return (deg * pi / 180); }
 
-//  This function converts radians to decimal degrees
-double rad2deg(double rad) {
-  return (rad * 180 / pi);
-}
-
+//  This function converts radians to decimal degrees
+double rad2deg(double rad) { return (rad * 180 / pi); }
 
 /**
  * Returns the distance between two points on the Earth.
@@ -132,17 +185,33 @@ double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d) {
   lon1r = deg2rad(lon1d);
   lat2r = deg2rad(lat2d);
   lon2r = deg2rad(lon2d);
-  u = sin((lat2r - lat1r)/2);
-  v = sin((lon2r - lon1r)/2);
-  return 2.0 * earthRadiusKm * asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
+  u = sin((lat2r - lat1r) / 2);
+  v = sin((lon2r - lon1r) / 2);
+  return 2.0 * earthRadiusKm *
+         asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
 }
 
-
 /*
-	Provide sort routine on linked list
+Provide sort routine on linked list
 */
-/*
-void simpleSortTotal()
-{
+void simpleSortTotal(Airport *p1, Airport *ref) {
+  Airport *temp;
+  Airport *
+      p2; // p2->next and p2->next->next are the two things that will be swapped
+  int count = 0;
+  bool swapped = true;
+  while (swapped) {
+    swapped = false;
+    p2 = p1; // Keeping the head
+    while (p2->next->next != NULL) {
+      if (p2->next->dist > p2->next->next->dist) {
+        temp = p2->next;
+        p2->next = p2->next->next;
+        temp->next = p2->next->next;
+        p2->next->next = temp;
+        swapped = true;
+      }
+      p2 = p2->next;
+    }
+  }
 }
-*/
