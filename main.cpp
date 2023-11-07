@@ -28,15 +28,6 @@
 
 using namespace std;
 
-class Airport {
-public:
-  char code[5];
-  double longitude;
-  double latitude;
-  double dist;
-  Airport *next;
-};
-
 void simpleSortTotal(Airport *p1, Airport *ref);
 double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d);
 
@@ -134,8 +125,9 @@ int main() {
     ofstream in100("within100miles.csv");
     if (in100.is_open()) {
       while (prev != NULL && prev->dist <= 100) {
-        in100 << prev->code << " long: " << prev->longitude
-              << " lat: " << prev->latitude << " dist: " << prev->dist << endl;
+        // in100 << prev->code << " long: " << prev->longitude
+        //       << " lat: " << prev->latitude << " dist: " << prev->dist << endl;
+        in100 << prev->code << endl;
         prev = prev->next;
       }
     }

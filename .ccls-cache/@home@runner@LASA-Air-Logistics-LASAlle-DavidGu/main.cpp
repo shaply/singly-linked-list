@@ -23,16 +23,10 @@
 #include <iostream>
 #include <string>
 
-using namespace std;
+// NEED TO CONVERT KILOMETERS TO MILES AFTERWARDS BC DISTANCE EARTH RETURNS IN
+// KILOMETERS
 
-class Airport {
-public:
-  char code[5];
-  double longitude;
-  double latitude;
-  double dist;
-  Airport *next;
-};
+using namespace std;
 
 void simpleSortTotal(Airport *p1, Airport *ref);
 double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d);
@@ -40,54 +34,47 @@ double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d);
 int main() {
   ifstream infile;
   int i = 0;
-  char cNum[10];
+  char cNum[12];
+  char airports[1000];
   Airport *head = new Airport();
   int airportCount;
 
-  infile.open("USAirportCodes.csv", ifstream::in);
+  infile.open("airport-codes_US.csv", ifstream::in);
   Airport *prev = head;
   if (infile.is_open()) {
     int c = 0;
     while (infile.good()) {
       Airport *airport = new Airport();
       infile.getline(airport->code, 256, ',');
+      infile.getline(airports, 256, ',');
+      if (!strstr(airports, "airport")) {
+        infile.getline(airports, 256, '\n');
+        continue;
+      }                                   // check if it is an airport
+      infile.getline(airports, 256, ','); // get past the name
       infile.getline(cNum, 256, ',');
       airport->longitude = atof(cNum);
-      infile.getline(cNum, 256, '\n');
+      infile.getline(cNum, 256, ',');
       airport->latitude = atof(cNum);
+      infile.getline(airports, 256, '\n');
 
       // Add new airport to list
       prev->next = airport;
       prev = airport;
-
-      // if (!(c % 1000))
-      //     cout << airport->code << " long: " << airport->longitude
-      //          << " lat: " << airport->latitude << endl;
-
-      /*
-      if (!(c % 1000))
-      {
-      cout << airportArr[c]->code << " long: " <<
-      airportArr[c]->longitude << " lat: " << airportArr[c]->latitude <<
-      endl; cout << airportArr[c+1]->code << endl; //" long: " <<
-      airportArr[c+1]->longitude << " lat: " << airportArr[c+1]->latitude
-      <<  endl;
-      }
-      */
 
       i++;
       c++;
     }
     airportCount = c - 1;
     // Skip header
-    head->next = head->next->next;
+    // head->next = head->next->next;
     infile.close();
 
     Airport *ref;
     // Find reference airprt
     prev = head;
     while (prev->next) {
-      if (strncmp(prev->next->code, "AUS", 3) == 0) {
+      if (strncmp(prev->next->code, "KAUS", 4) == 0) {
         ref = prev->next;
         break;
       }
@@ -138,8 +125,9 @@ int main() {
     ofstream in100("within100miles.csv");
     if (in100.is_open()) {
       while (prev != NULL && prev->dist <= 100) {
-        in100 << prev->code << " long: " << prev->longitude
-              << " lat: " << prev->latitude << " dist: " << prev->dist << endl;
+        // in100 << prev->code << " long: " << prev->longitude
+        //       << " lat: " << prev->latitude << " dist: " << prev->dist << endl;
+        in100 << prev->code << endl;
         prev = prev->next;
       }
     }
@@ -148,12 +136,12 @@ int main() {
     // Print all the airports
     prev = head->next;
     while (prev != NULL) {
-        cout << prev->code << " long: " << prev->longitude
-           << " lat: " << prev->latitude << " dist: "
-           << distanceEarth(prev->latitude, prev->longitude, ref->latitude,
-                            ref->longitude)
-           << endl;
-        prev = prev->next;
+      cout << prev->code << " long: " << prev->longitude
+           << " lat: " << prev->latitude << " dist: "
+           << distanceEarth(prev->latitude, prev->longitude, ref->latitude,
+                            ref->longitude)
+           << endl;
+      prev = prev->next;
     }
 
   } else {
@@ -187,7 +175,8 @@ double distanceEarth(double lat1d, double lon1d, double lat2d, double lon2d) {
   lon2r = deg2rad(lon2d);
   u = sin((lat2r - lat1r) / 2);
   v = sin((lon2r - lon1r) / 2);
-  return 2.0 * earthRadiusKm *
+  double toMile = 0.621371;
+  return 2.0 * earthRadiusKm * toMile *
          asin(sqrt(u * u + cos(lat1r) * cos(lat2r) * v * v));
 }
 
